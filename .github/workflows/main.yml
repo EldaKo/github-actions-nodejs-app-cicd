@@ -1,39 +1,21 @@
-name: Conditional, Sharing and Matrix Workflow Example
+name: Node.js CI/CD
 
 on:
   push:
-    branches:
-      - master
+    branches: [ "master" ]
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-
+    runs-on: self-hosted
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [22.x]
     steps:
-    - name: Create hello.txt
-      run: echo "Hello, GitHub Actions!" > hello.txt
-
-    - name: Upload Artifact
-      if: ${{ contains(github.event.head_commit.message, 'deploy') }}
-      uses: actions/upload-artifact@v4
+    - uses: actions/checkout@v4.2.2
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4.1.0
       with:
-        name:  my-artifact-${{ matrix.os }} 
-
-        path: hello.txt
-        
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Download Artifact
-      if: ${{ contains(github.event.head_commit.message, 'deploy') }}
-      uses: actions/download-artifact@v4
-      with:
-        name: my-artifact-ubuntu-latest
-
-    - name: Display hello.txt
-      run: cat hello.txt
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    - run: npm ci
+    - run: npm test
